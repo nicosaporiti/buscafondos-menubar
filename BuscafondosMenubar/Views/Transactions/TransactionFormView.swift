@@ -112,15 +112,28 @@ struct TransactionFormView: View {
 
     private var fundPicker: some View {
         field(label: "Fondo objetivo") {
-            Picker("", selection: $selectedFundId) {
-                ForEach(funds) { fund in
-                    Text(fund.nombre + " · " + fund.serie).tag(Optional(fund.realAssetId))
+            Menu {
+                Picker("", selection: $selectedFundId) {
+                    ForEach(funds) { fund in
+                        Text(fund.nombre + " · " + fund.serie).tag(Optional(fund.realAssetId))
+                    }
+                }
+                .pickerStyle(.inline)
+                .labelsHidden()
+            } label: {
+                HStack(spacing: Spacing.xs) {
+                    Text(selectedFund.map { "\($0.nombre) · \($0.serie)" } ?? "Selecciona un fondo")
+                        .font(Typography.titleSM)
+                        .foregroundStyle(Palette.primary)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(Palette.onSurfaceVariant)
                 }
             }
-            .pickerStyle(.menu)
-            .labelsHidden()
-            .tint(Palette.primary)
-            .font(Typography.titleSM)
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
         }
     }
 
@@ -131,7 +144,7 @@ struct TransactionFormView: View {
                 .datePickerStyle(.compact)
                 .tint(Palette.secondary)
                 .font(Typography.moneySM)
-                .foregroundStyle(Palette.primary)
+                .environment(\.colorScheme, .light)
         }
     }
 

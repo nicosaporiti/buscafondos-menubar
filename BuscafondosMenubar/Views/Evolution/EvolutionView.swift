@@ -51,7 +51,13 @@ struct EvolutionView: View {
 
     private var reloadKey: String {
         let fundsSig = funds
-            .map { "\($0.realAssetId):\($0.transacciones.count):\($0.ultimoValorCuota)" }
+            .map { fund -> String in
+                let txsSig = fund.transacciones
+                    .map { "\(Int($0.fecha.timeIntervalSince1970))/\($0.cuotas)/\($0.valorCuota)/\($0.tipoRaw)" }
+                    .sorted()
+                    .joined(separator: ";")
+                return "\(fund.realAssetId):\(fund.ultimoValorCuota):\(txsSig)"
+            }
             .sorted()
             .joined(separator: "|")
         return "\(timeframe.rawValue)#\(fundsSig)"
@@ -110,18 +116,6 @@ struct EvolutionView: View {
                     )
                 } else {
                     Chart(series) { point in
-                        AreaMark(
-                            x: .value("Fecha", point.date),
-                            y: .value("Valor", point.displayValue)
-                        )
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Palette.secondary.opacity(0.25), Palette.secondary.opacity(0.0)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .interpolationMethod(.monotone)
                         LineMark(
                             x: .value("Fecha", point.date),
                             y: .value("Valor", point.displayValue)
@@ -130,11 +124,19 @@ struct EvolutionView: View {
                         .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
                         .interpolationMethod(.monotone)
                     }
+                    .chartXScale(domain: (series.first?.date ?? Date())...(series.last?.date ?? Date()))
+                    .chartYScale(domain: .automatic(includesZero: false))
                     .chartYAxis {
-                        AxisMarks(position: .trailing) { _ in
-                            AxisValueLabel()
-                                .font(Typography.labelXS)
-                                .foregroundStyle(Palette.onSurfaceVariant)
+                        AxisMarks(position: .trailing) { value in
+                            AxisGridLine()
+                                .foregroundStyle(Palette.outlineVariant.opacity(0.25))
+                            AxisValueLabel {
+                                if let v = value.as(Double.self) {
+                                    Text(Self.abbreviatedCLP(v))
+                                        .font(Typography.labelXS)
+                                        .foregroundStyle(Palette.onSurfaceVariant)
+                                }
+                            }
                         }
                     }
                     .chartXAxis {
@@ -157,58 +159,91 @@ struct EvolutionView: View {
         defer { loading = false }
         guard !funds.isEmpty else { series = []; return }
 
-        let to = Date()
-        let from: Date? = timeframe.days.map {
-            Calendar.current.date(byAdding: .day, value: -$0, to: to) ?? to
-        }
+        let cal = Calendar(identifier: .gregorian)
+        let endDay = cal.startOfDay(for: Date())
+        let firstTxDay: Date? = funds
+            .flatMap { $0.transacciones }
+            .map { cal.startOfDay(for: $0.fecha) }
+            .min()
+        let windowStart: Date = {
+            if let days = timeframe.days {
+                return cal.date(byAdding: .day, value: -days, to: endDay) ?? endDay
+            }
+            // ALL: desde la primera transacción del portafolio
+            return firstTxDay ?? (cal.date(byAdding: .day, value: -365, to: endDay) ?? endDay)
+        }()
+        // Nunca antes de la primera transacción: antes de eso no hay portafolio.
+        let startDay = max(windowStart, firstTxDay ?? windowStart)
+        guard startDay <= endDay else { series = []; return }
 
-        // Fetch per-fund price histories in parallel.
+        // Histories por fondo, en paralelo. Pedimos con un buffer hacia atrás para que
+        // siempre haya un NAV previo al primer día de la ventana (forward-fill).
+        let fetchFrom = cal.date(byAdding: .day, value: -14, to: startDay) ?? startDay
         var byFund: [String: [PricePoint]] = [:]
         await withTaskGroup(of: (String, [PricePoint]).self) { group in
             for fund in funds {
+                let id = fund.realAssetId
                 group.addTask {
-                    let points = (try? await env.api.priceHistory(
-                        realAssetId: fund.realAssetId,
-                        from: from,
-                        to: to
+                    let pts = (try? await env.api.priceHistory(
+                        realAssetId: id,
+                        from: fetchFrom,
+                        to: endDay
                     )) ?? []
-                    return (fund.realAssetId, points)
+                    return (id, pts.sorted { $0.date < $1.date })
                 }
             }
-            for await (id, points) in group {
-                byFund[id] = points
-            }
+            for await (id, pts) in group { byFund[id] = pts }
         }
 
-        // Build a sorted union of all dates and compute Σ (cuotas_netas_a_t * nav_t) per date.
-        let allDates = Set(byFund.values.flatMap { $0.map { $0.date } }).sorted()
-        guard !allDates.isEmpty else { series = []; return }
+        // Pre-compute sorted transactions per fund (start-of-day) para que el scan
+        // sea O(n+m) por fondo.
+        struct TxDay { let day: Date; let cuotas: Decimal }
+        var txByFund: [String: [TxDay]] = [:]
+        for fund in funds {
+            txByFund[fund.realAssetId] = fund.transacciones
+                .map { TxDay(day: cal.startOfDay(for: $0.fecha), cuotas: $0.cuotas) }
+                .sorted { $0.day < $1.day }
+        }
 
-        let cal = Calendar(identifier: .gregorian)
+        // Grilla diaria — garantiza ≥ 2 puntos y chart continuo.
         var out: [SeriesPoint] = []
-        for date in allDates {
+        var day = startDay
+        while day <= endDay {
             var total: Decimal = 0
             for fund in funds {
-                let cuotasAtDate = fund.transacciones
-                    .filter { cal.startOfDay(for: $0.fecha) <= date }
-                    .reduce(Decimal(0)) { $0 + $1.cuotas }
-                guard cuotasAtDate != 0 else { continue }
+                let txs = txByFund[fund.realAssetId] ?? []
+                var cuotas: Decimal = 0
+                for tx in txs {
+                    if tx.day <= day { cuotas += tx.cuotas } else { break }
+                }
+                guard cuotas > 0 else { continue }
                 let history = byFund[fund.realAssetId] ?? []
-                let nav = lastPrice(in: history, upTo: date) ?? fund.ultimoValorCuota
-                total += cuotasAtDate * nav
+                guard let nav = Self.lastPrice(in: history, upTo: day) else { continue }
+                total += cuotas * nav
             }
             if total > 0 {
-                out.append(SeriesPoint(date: date, value: total))
+                out.append(SeriesPoint(date: day, value: total))
             }
+            guard let next = cal.date(byAdding: .day, value: 1, to: day) else { break }
+            day = next
         }
         series = out
     }
 
-    private func lastPrice(in history: [PricePoint], upTo date: Date) -> Decimal? {
+    private static func lastPrice(in history: [PricePoint], upTo date: Date) -> Decimal? {
         var result: Decimal?
         for p in history {
             if p.date <= date { result = p.price } else { break }
         }
         return result
+    }
+
+    fileprivate static func abbreviatedCLP(_ v: Double) -> String {
+        let sign = v < 0 ? "-" : ""
+        let a = Swift.abs(v)
+        if a >= 1_000_000_000 { return "\(sign)$\(String(format: "%.1f", a / 1_000_000_000))B" }
+        if a >= 1_000_000 { return "\(sign)$\(String(format: "%.1f", a / 1_000_000))M" }
+        if a >= 1_000 { return "\(sign)$\(String(format: "%.0f", a / 1_000))K" }
+        return "\(sign)$\(String(format: "%.0f", a))"
     }
 }

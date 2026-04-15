@@ -25,11 +25,6 @@ struct PortfolioSnapshot {
     let retornoAbs: Decimal
     let retornoPct: Double
     let holdings: [Holding]
-    // Deltas
-    let today: Decimal
-    let mtd: Decimal
-    let lastMonth: Decimal
-    let ytd: Decimal
 }
 
 final class PortfolioCalculator {
@@ -84,18 +79,12 @@ final class PortfolioCalculator {
             return n.doubleValue / d.doubleValue
         }()
 
-        // TODO: compute real deltas with historical NAVs once FundSyncService stores them.
-        // For v1 placeholder values are 0 so the UI stays honest.
         return PortfolioSnapshot(
             total: total,
             costoBase: base,
             retornoAbs: retornoAbs,
             retornoPct: retornoPct,
-            holdings: holdings,
-            today: 0,
-            mtd: 0,
-            lastMonth: 0,
-            ytd: 0
+            holdings: holdings
         )
     }
 }

@@ -15,6 +15,8 @@
 		453DF354A9605E65786506E3 /* PortfolioCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2352EC3786202AF4996CDBFC /* PortfolioCalculator.swift */; };
 		5C18E7527695BAEFF36F272B /* JSONAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = F69DD970613258AE859BC6F2 /* JSONAPI.swift */; };
 		67FE20A4824AE0F06B0BDB18 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92A5A9E76FCFB8F797012EC1 /* DashboardView.swift */; };
+		7FBF73C4E7D7B9A3FB198C7A /* EditTransactionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 647843D8C67E0DC2992B1BF2 /* EditTransactionSheet.swift */; };
+		924E02EAAFA9B4294610F244 /* FundDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B322D22E7D66214F606A23 /* FundDetailSheet.swift */; };
 		997BFC1C3464132158741B27 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADFE1D277431414BF904C36D /* AppEnvironment.swift */; };
 		A38AFCF7DD73C5C27734EEBF /* AddFundSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D4FE30E229D38622D8CA467 /* AddFundSheet.swift */; };
 		AAC196AAA06B0A2F8BB5D203 /* TransactionFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73AACE07ED963C47AF7C76E /* TransactionFormView.swift */; };
@@ -29,9 +31,11 @@
 /* Begin PBXFileReference section */
 		0F17A31048F450DBD635702F /* Fund.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fund.swift; sourceTree = "<group>"; };
 		2352EC3786202AF4996CDBFC /* PortfolioCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioCalculator.swift; sourceTree = "<group>"; };
+		26B322D22E7D66214F606A23 /* FundDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FundDetailSheet.swift; sourceTree = "<group>"; };
 		3CC888C852E3B084FFDA7B7B /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		40EABAD69B6D958D9F8994E4 /* BuscafondosAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuscafondosAPI.swift; sourceTree = "<group>"; };
 		485484DC6233C78CDAC955BA /* DiskCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskCache.swift; sourceTree = "<group>"; };
+		647843D8C67E0DC2992B1BF2 /* EditTransactionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditTransactionSheet.swift; sourceTree = "<group>"; };
 		7D4FE30E229D38622D8CA467 /* AddFundSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddFundSheet.swift; sourceTree = "<group>"; };
 		92A5A9E76FCFB8F797012EC1 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		9AD13537346A1DE77371A8CC /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
@@ -54,6 +58,7 @@
 			isa = PBXGroup;
 			children = (
 				7D4FE30E229D38622D8CA467 /* AddFundSheet.swift */,
+				26B322D22E7D66214F606A23 /* FundDetailSheet.swift */,
 				CBB4612429CBE4D4AFBBBA06 /* FundsListView.swift */,
 			);
 			path = Funds;
@@ -151,6 +156,7 @@
 		C35430D548C2377705AF607C /* Transactions */ = {
 			isa = PBXGroup;
 			children = (
+				647843D8C67E0DC2992B1BF2 /* EditTransactionSheet.swift */,
 				F73AACE07ED963C47AF7C76E /* TransactionFormView.swift */,
 			);
 			path = Transactions;
@@ -246,8 +252,10 @@
 				B69A69FFE3EB51695C9374BB /* Components.swift in Sources */,
 				67FE20A4824AE0F06B0BDB18 /* DashboardView.swift in Sources */,
 				198C2FE43BDF1A06CBE489A1 /* DiskCache.swift in Sources */,
+				7FBF73C4E7D7B9A3FB198C7A /* EditTransactionSheet.swift in Sources */,
 				2BDBDECFEEC86A0D846BB304 /* EvolutionView.swift in Sources */,
 				E0BC7F90AA05FCD7B8A6E271 /* Fund.swift in Sources */,
+				924E02EAAFA9B4294610F244 /* FundDetailSheet.swift in Sources */,
 				30F537A6C69B41705DEC92D4 /* FundTransaction.swift in Sources */,
 				E646D7E58B04F2476EE7033F /* FundsListView.swift in Sources */,
 				5C18E7527695BAEFF36F272B /* JSONAPI.swift in Sources */,

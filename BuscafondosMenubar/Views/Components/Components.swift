@@ -235,3 +235,73 @@ struct EmptyStateView: View {
         .frame(maxWidth: .infinity)
     }
 }
+
+// MARK: - ConfirmDialog (overlay inline de confirmación, reemplaza .confirmationDialog que no
+// funciona bien dentro de MenuBarExtra)
+struct ConfirmDialog: View {
+    let title: String
+    let message: String
+    var confirmLabel: String = "Confirmar"
+    var cancelLabel: String = "Cancelar"
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.45)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { onCancel() }
+            VStack(spacing: Spacing.md) {
+                VStack(spacing: Spacing.xs) {
+                    Text(title.uppercased())
+                        .font(Typography.labelSM)
+                        .tracking(1.4)
+                        .foregroundStyle(Palette.error)
+                    Text(message)
+                        .font(Typography.bodyMD)
+                        .foregroundStyle(Palette.primary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                HStack(spacing: Spacing.sm) {
+                    Button(action: onCancel) {
+                        Text(cancelLabel.uppercased())
+                            .font(Typography.labelMD)
+                            .tracking(1.2)
+                            .foregroundStyle(Palette.primary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, Spacing.sm)
+                            .background(Palette.surfaceContainerLowest)
+                            .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Radius.md)
+                                    .stroke(Palette.outlineVariant.opacity(0.35), lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    Button(action: onConfirm) {
+                        Text(confirmLabel.uppercased())
+                            .font(Typography.labelMD)
+                            .tracking(1.2)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, Spacing.sm)
+                            .background(Palette.error)
+                            .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(Spacing.md)
+            .background(Palette.surfaceContainerHigh)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.lg)
+                    .stroke(Palette.outlineVariant.opacity(0.4), lineWidth: 1)
+            )
+            .shadow(radius: 24, y: 8)
+            .padding(.horizontal, Spacing.lg)
+        }
+    }
+}

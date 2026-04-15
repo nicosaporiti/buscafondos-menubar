@@ -5,6 +5,8 @@ struct FundsListView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Fund.nombre) private var funds: [Fund]
     @State private var showAddSheet = false
+    @State private var detailFund: Fund?
+    @State private var fundPendingDelete: Fund?
 
     private var grouped: [(agf: String, funds: [Fund])] {
         let dict = Dictionary(grouping: funds, by: { $0.agf?.nombre ?? "Sin AGF" })
@@ -18,6 +20,9 @@ struct FundsListView: View {
             Palette.surface.ignoresSafeArea()
             if showAddSheet {
                 AddFundSheet(onDismiss: { showAddSheet = false })
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            } else if let detailFund {
+                FundDetailSheet(fund: detailFund, onDismiss: { self.detailFund = nil })
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             } else {
                 ScrollView {
@@ -42,6 +47,19 @@ struct FundsListView: View {
                     .frame(maxWidth: .infinity, alignment: .top)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            }
+            if let fund = fundPendingDelete {
+                ConfirmDialog(
+                    title: "Eliminar fondo",
+                    message: "Se eliminará \"\(fund.nombre)\" junto con sus \(fund.transacciones.count) movimientos. Esta acción no se puede deshacer.",
+                    confirmLabel: "Eliminar",
+                    onConfirm: {
+                        context.delete(fund)
+                        try? context.save()
+                        fundPendingDelete = nil
+                    },
+                    onCancel: { fundPendingDelete = nil }
+                )
             }
         }
     }
@@ -111,27 +129,46 @@ struct FundsListView: View {
     private func fundRow(_ fund: Fund) -> some View {
         let cuotas = fund.transacciones.reduce(Decimal(0)) { $0 + $1.cuotas }
         let valor = cuotas * fund.ultimoValorCuota
-        return HStack(alignment: .center, spacing: Spacing.md) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(fund.nombre)
-                    .font(Typography.titleSM)
-                    .foregroundStyle(Palette.primary)
-                    .lineLimit(1)
-                Text("\(fund.run) · Serie \(fund.serie)".uppercased())
-                    .font(Typography.labelXS)
-                    .tracking(1)
-                    .foregroundStyle(Palette.onSurfaceVariant)
+        return Button {
+            detailFund = fund
+        } label: {
+            HStack(alignment: .center, spacing: Spacing.md) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(fund.nombre)
+                        .font(Typography.titleSM)
+                        .foregroundStyle(Palette.primary)
+                        .lineLimit(1)
+                    Text("\(fund.run) · Serie \(fund.serie)".uppercased())
+                        .font(Typography.labelXS)
+                        .tracking(1)
+                        .foregroundStyle(Palette.onSurfaceVariant)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(Formatters.clp(valor))
+                        .font(Typography.moneySM)
+                        .foregroundStyle(Palette.primary)
+                    Text("\(Formatters.cuotas.string(from: cuotas as NSDecimalNumber) ?? "0") cuotas")
+                        .font(Typography.labelXS)
+                        .foregroundStyle(Palette.onSurfaceVariant)
+                }
             }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(Formatters.clp(valor))
-                    .font(Typography.moneySM)
-                    .foregroundStyle(Palette.primary)
-                Text("\(Formatters.cuotas.string(from: cuotas as NSDecimalNumber) ?? "0") cuotas")
-                    .font(Typography.labelXS)
-                    .foregroundStyle(Palette.onSurfaceVariant)
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            Button {
+                detailFund = fund
+            } label: {
+                Label("Ver detalle", systemImage: "list.bullet.rectangle")
+            }
+            Button(role: .destructive) {
+                fundPendingDelete = fund
+            } label: {
+                Label("Eliminar fondo", systemImage: "trash")
             }
         }
-        .padding(.vertical, 4)
     }
 }
+
