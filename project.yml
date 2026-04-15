@@ -1,0 +1,45 @@
+name: BuscafondosMenubar
+options:
+  bundleIdPrefix: com.buscafondos
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    PRODUCT_BUNDLE_IDENTIFIER: com.buscafondos.menubar
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+    ENABLE_HARDENED_RUNTIME: YES
+    SWIFT_STRICT_CONCURRENCY: minimal
+targets:
+  BuscafondosMenubar:
+    type: application
+    platform: macOS
+    sources:
+      - path: BuscafondosMenubar
+    resources:
+      - path: BuscafondosMenubar/Resources
+    info:
+      path: BuscafondosMenubar/Resources/Info.plist
+      properties:
+        LSUIElement: true
+        CFBundleDisplayName: Buscafondos
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSHumanReadableCopyright: ""
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: false
+    entitlements:
+      path: BuscafondosMenubar/Resources/BuscafondosMenubar.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        com.apple.security.files.user-selected.read-write: true
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: NO
